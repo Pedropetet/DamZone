@@ -1,0 +1,45 @@
+# OTAP — Acceptatie (A)
+# Start met: docker compose up --build
+# Toegankelijk op: http://localhost
+
+services:
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: damzone_acc
+      POSTGRES_USER: damzone
+      POSTGRES_PASSWORD: damzone_acc_pw
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U damzone -d damzone_acc"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      target: server
+    restart: unless-stopped
+    env_file: .env.acceptance
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      target: frontend
+      args:
+        VITE_MODE: acceptance
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - app
+
+volumes:
+  postgres_data:

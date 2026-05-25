@@ -1,0 +1,103 @@
+// PostgreSQL-versie van het schema — gebruik in acceptatie & productie
+// Kopieer naar schema.prisma en run: npx prisma migrate deploy
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String   @id @default(uuid())
+  username           String   @unique
+  email              String   @unique
+  passwordHash       String
+  role               UserRole
+  isTwoFactorEnabled Boolean  @default(false)
+  tfaSecret          String?
+  players            Player[]
+  sessions           Session[]
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model Player {
+  id            String     @id @default(uuid())
+  username      String
+  color         PieceColor
+  isCurrentTurn Boolean    @default(false)
+  isConnected   Boolean    @default(true)
+  user          User       @relation(fields: [userId], references: [id])
+  userId        String
+  game          Game       @relation(fields: [gameId], references: [id])
+  gameId        String
+}
+
+model Game {
+  id               String     @id @default(uuid())
+  status           GameStatus
+  currentTurnColor PieceColor
+  winnerId         String?
+  timerPerTurn     Int?
+  startedAt        DateTime?
+  endedAt          DateTime?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  players          Player[]
+  moves            Move[]
+  boardStateJson   String
+  sessions         Session[]
+}
+
+model Move {
+  id          String   @id @default(uuid())
+  fromRow     Int
+  fromCol     Int
+  toRow       Int
+  toCol       Int
+  isCapture   Boolean
+  isPromotion Boolean
+  timestamp   DateTime @default(now())
+  game        Game     @relation(fields: [gameId], references: [id])
+  gameId      String
+}
+
+model Session {
+  id         String   @id @default(uuid())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  game       Game     @relation(fields: [gameId], references: [id])
+  gameId     String
+  lastSeenAt DateTime @default(now())
+  isActive   Boolean  @default(true)
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  gameId    String
+  userId    String
+  username  String
+  message   String
+  timestamp DateTime @default(now())
+}
+
+enum UserRole {
+  player
+  admin
+}
+
+enum GameStatus {
+  waiting
+  in_progress
+  finished
+  abandoned
+}
+
+enum PieceColor {
+  white
+  black
+}

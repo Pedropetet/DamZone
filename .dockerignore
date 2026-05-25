@@ -1,0 +1,12 @@
+node_modules
+dist
+dist-ssr
+generated
+prisma/dev.db
+prisma/test.db
+.env
+.env.local
+*.log
+.git
+cypress
+server/__tests__

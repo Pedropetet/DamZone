@@ -1,0 +1,107 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String   @id @default(uuid())
+  username           String   @unique
+  email              String   @unique
+  passwordHash       String
+  role               UserRole
+  isTwoFactorEnabled Boolean  @default(false)
+  tfaSecret          String?  // optioneel, als 2FA aanstaat
+  players            Player[] // relatie met Player
+  sessions           Session[]
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model Player {
+  id             String   @id @default(uuid())
+  username       String
+  color          PieceColor
+  isCurrentTurn  Boolean  @default(false)
+  isConnected    Boolean  @default(true)
+  user           User     @relation(fields: [userId], references: [id])
+  userId         String
+  game           Game     @relation(fields: [gameId], references: [id])
+  gameId         String
+}
+
+model Game {
+  id                  String     @id @default(uuid())
+  status              GameStatus
+  currentTurnColor    PieceColor
+  winnerId            String?   // winnaar is een Player-id
+  timerPerTurn        Int?      // seconden
+  startedAt           DateTime?
+  endedAt             DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  players             Player[]  // 2 spelers
+  moves               Move[]
+  boardStateJson      String    // (Piece | null)[][] als JSON string
+  sessions            Session[]
+}
+
+model Move {
+  id          String   @id @default(uuid())
+  fromRow     Int
+  fromCol     Int
+  toRow       Int
+  toCol       Int
+  isCapture   Boolean
+  isPromotion Boolean
+  timestamp   DateTime @default(now())
+  game        Game     @relation(fields: [gameId], references: [id])
+  gameId      String
+}
+
+model Session {
+  id          String   @id @default(uuid())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  game        Game     @relation(fields: [gameId], references: [id])
+  gameId      String
+  lastSeenAt  DateTime @default(now())
+  isActive    Boolean  @default(true)
+}
+
+enum UserRole {
+  player
+  admin
+}
+
+enum GameStatus {
+  waiting
+  in_progress
+  finished
+  abandoned
+}
+
+enum PieceColor {
+  white
+  black
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  gameId    String
+  userId    String
+  username  String
+  message   String
+  timestamp DateTime @default(now())
+}

@@ -1,0 +1,21 @@
+# OTAP — Productie (P)
+# Start met: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Vul .env.production in met echte secrets VOOR je dit runt
+
+services:
+
+  db:
+    environment:
+      POSTGRES_DB: damzone_prod
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+  app:
+    env_file: .env.production
+    restart: always
+
+  frontend:
+    build:
+      args:
+        VITE_MODE: production
+    restart: always
