@@ -32,12 +32,12 @@ export default function RegisterPage() {
   }
 
   return (
-    <div>
-      <div className="flex justify-center mt-8">
-        <img src="/damzone logo.png" alt="DamZone logo" className="w-12 h-12" />
-      </div>
-      <Card className="max-w-md mx-auto mt-4 p-6">
-        <h1 className="text-2xl font-bold mb-4">Registreren</h1>
+    <div className="max-w-md mx-auto mt-20 px-4">
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl font-bold">Registreren</h1>
+          <img src="/damzone logo.png" alt="DamZone logo" className="w-10 h-10" />
+        </div>
         <form onSubmit={handleSubmit}>
           <div className="space-y-3">
             <div>

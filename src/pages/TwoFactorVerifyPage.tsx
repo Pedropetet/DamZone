@@ -41,11 +41,11 @@ export default function TwoFactorVerifyPage() {
   }
 
   return (
-    <div>
-      <Card className="max-w-md mx-auto mt-20 p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <img src="/damzone logo.png" alt="DamZone logo" className="w-10 h-10" />
+    <div className="max-w-md mx-auto mt-20 px-4">
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold">Tweestapsverificatie</h1>
+          <img src="/damzone logo.png" alt="DamZone logo" className="w-10 h-10" />
         </div>
         <p className="text-sm text-muted-foreground mb-4">
           Voer de 6-cijferige code uit je authenticator-app in.

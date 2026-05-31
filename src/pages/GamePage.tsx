@@ -271,46 +271,49 @@ export default function GamePage() {
 
       {/* Spel content — gecentreerd op de pagina */}
       <div className="flex-1 flex flex-col items-center justify-center p-6">
-        {/* Spelinfo boven bord + chat */}
-        <div className="flex items-center justify-between w-full max-w-[760px] mb-3">
-          <h2 className="text-xl font-semibold">
-            Jij speelt {playerColor === "white" ? "⚪ Wit" : "⚫ Zwart"}
-          </h2>
-          <span className="text-sm text-muted-foreground">
-            vs <strong>{opponentUsername}</strong>
-          </span>
-        </div>
-
-        {/* Beurt-indicator */}
-        <p className="w-full max-w-[760px] mb-4 text-sm">
-          {opponentDisconnected ? (
-            <span className="text-amber-600 font-medium">
-              Tegenstander heeft de verbinding verbroken. Wacht op herverbinding…
+        {/* Spelinfo + bord + chat als één gecentreerde groep */}
+        <div className="flex flex-col">
+          {/* Spelinfo boven bord + chat — breedte volgt automatisch */}
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-xl font-semibold">
+              Jij speelt {playerColor === "white" ? "⚪ Wit" : "⚫ Zwart"}
+            </h2>
+            <span className="text-sm text-muted-foreground ml-6">
+              vs <strong>{opponentUsername}</strong>
             </span>
-          ) : isMyTurn ? (
-            <span className="text-green-600 font-medium">Jij bent aan zet</span>
-          ) : (
-            <span className="text-muted-foreground">Wacht op tegenstander…</span>
-          )}
-        </p>
+          </div>
 
-        {/* Bord + Chat naast elkaar, gecentreerd */}
-        <div className="flex gap-4 items-start">
-          <Board
-            board={game.board}
-            selectedPiece={selectedPiece}
-            movablePieces={movablePieces}
-            validMoves={validMoves}
-            onPieceClick={handlePieceClick}
-            onSquareClick={handleSquareClick}
-          />
+          {/* Beurt-indicator */}
+          <p className="mb-3 text-sm">
+            {opponentDisconnected ? (
+              <span className="text-amber-600 font-medium">
+                Tegenstander heeft de verbinding verbroken. Wacht op herverbinding…
+              </span>
+            ) : isMyTurn ? (
+              <span className="text-green-600 font-medium">Jij bent aan zet</span>
+            ) : (
+              <span className="text-muted-foreground">Wacht op tegenstander…</span>
+            )}
+          </p>
 
-          <div className="w-72 h-[500px]">
-            <Chat
-              gameId={game.id}
-              socket={socket}
-              currentUsername={user?.username ?? ""}
+          {/* Bord links, chat rechts; op kleine schermen chat eronder */}
+          <div className="flex flex-wrap gap-4 items-start">
+            <Board
+              board={game.board}
+              selectedPiece={selectedPiece}
+              movablePieces={movablePieces}
+              validMoves={validMoves}
+              onPieceClick={handlePieceClick}
+              onSquareClick={handleSquareClick}
             />
+
+            <div className="w-72 h-[500px] min-w-[250px]">
+              <Chat
+                gameId={game.id}
+                socket={socket}
+                currentUsername={user?.username ?? ""}
+              />
+            </div>
           </div>
         </div>
       </div>

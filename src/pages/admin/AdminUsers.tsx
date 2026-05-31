@@ -52,13 +52,13 @@ export function AdminUsers() {
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b text-left text-muted-foreground">
-              <th className="pb-2 pr-6 font-medium">Gebruikersnaam</th>
-              <th className="pb-2 pr-6 font-medium">E-mail</th>
-              <th className="pb-2 pr-6 font-medium">Rol</th>
-              <th className="pb-2 pr-6 font-medium">2FA</th>
-              <th className="pb-2 pr-6 font-medium">Aangemaakt</th>
-              <th className="pb-2 font-medium">Acties</th>
+            <tr className="border-b text-muted-foreground">
+              <th className="py-2 pr-6 font-medium text-left">Gebruikersnaam</th>
+              <th className="py-2 pr-6 font-medium text-left">E-mail</th>
+              <th className="py-2 pr-6 font-medium text-left">Rol</th>
+              <th className="py-2 pr-6 font-medium text-left">2FA</th>
+              <th className="py-2 pr-6 font-medium text-left">Aangemaakt</th>
+              <th className="py-2 font-medium text-left">Acties</th>
             </tr>
           </thead>
           <tbody>

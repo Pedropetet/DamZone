@@ -112,8 +112,8 @@ export default function AdminDashboard() {
         {/* Overzicht-tab */}
         {activeTab === "overview" && (
           <div>
-            <h1 className="text-2xl font-bold mb-6">Overzicht</h1>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+            <h2 className="text-lg font-semibold mb-4">Overzicht</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <StatCard
                 label="Totaal gebruikers"
                 value={stats?.totalUsers ?? "—"}
@@ -126,20 +126,6 @@ export default function AdminDashboard() {
                 label="Actieve spellen"
                 value={stats?.activeGames ?? "—"}
               />
-            </div>
-            <div className="flex gap-4">
-              <button
-                onClick={() => setActiveTab("users")}
-                className="text-sm text-blue-500 hover:underline"
-              >
-                Gebruikers beheren →
-              </button>
-              <button
-                onClick={() => setActiveTab("games")}
-                className="text-sm text-blue-500 hover:underline"
-              >
-                Spellen bekijken →
-              </button>
             </div>
           </div>
         )}

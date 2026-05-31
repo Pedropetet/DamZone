@@ -19,7 +19,6 @@ export default function HomePage() {
   const { user, token, logout } = useAuth();
   const navigate = useNavigate();
   const [status, setStatus] = useState<LobbyStatus>("idle");
-  // Bewaar de socket ref zodat cleanup na navigate nog werkt
   const socketRef = useRef(socketService.get());
 
   useEffect(() => {
@@ -77,32 +76,43 @@ export default function HomePage() {
   }
 
   return (
-    <div className="relative min-h-screen">
-      {/* Navigatiebalk */}
-      <div className="absolute top-4 right-4 flex items-center gap-3 text-sm">
-        <span className="text-muted-foreground">{user?.username}</span>
-        {user?.role === "admin" && (
+    <div className="min-h-screen flex flex-col">
+      <header className="border-b bg-background px-6 py-3 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-3">
+          <img src="/damzone logo.png" alt="DamZone" className="w-8 h-8" />
+          <span className="font-bold text-lg">DamZone</span>
+          <span className="text-muted-foreground text-sm">/ Lobby</span>
+        </div>
+        <div className="flex items-center gap-4 text-sm">
+          <span className="text-muted-foreground">
+            Ingelogd als <strong>{user?.username}</strong>
+          </span>
+          {user?.role === "admin" && (
+            <button
+              onClick={() => navigate("/admin")}
+              className="text-amber-600 hover:underline font-medium"
+            >
+              Admin
+            </button>
+          )}
           <button
-            onClick={() => navigate("/admin")}
-            className="text-amber-600 hover:underline font-medium"
+            onClick={() => navigate("/settings")}
+            className="text-blue-500 hover:underline"
           >
-            Admin
+            Instellingen
           </button>
-        )}
-        <button
-          onClick={() => navigate("/settings")}
-          className="text-blue-500 hover:underline"
-        >
-          Instellingen
-        </button>
-        <button onClick={handleLogout} className="text-muted-foreground hover:underline">
-          Uitloggen
-        </button>
-      </div>
+          <button
+            onClick={handleLogout}
+            className="text-muted-foreground hover:underline"
+          >
+            Uitloggen
+          </button>
+        </div>
+      </header>
 
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex-1 flex items-center justify-center">
         <div className="flex flex-col items-center space-y-6">
-          <img src="/damzone logo.png" alt="DamZone logo" className="w-24 h-24" />
+          <img src="/damzone logo.png" alt="DamZone logo" className="w-36 h-36" />
           <h1 className="text-4xl font-bold">DamZone</h1>
 
           {status === "idle" && (

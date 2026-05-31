@@ -3,7 +3,6 @@ import {
   Dialog,
   DialogTrigger,
   DialogContent,
-  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 
@@ -16,10 +15,8 @@ export function RuleDialog() {
         </Button>
       </DialogTrigger>
       <DialogContent>
-        <DialogTitle>Spelregels van Dammen</DialogTitle>
-        <DialogHeader>Spelregels</DialogHeader>
+        <DialogTitle>Spelregels van DamZone</DialogTitle>
         <div className="text-sm leading-relaxed">
-          <p>Hier komen de spelregels:</p>
           <ul className="list-disc ml-6 space-y-1">
             <li>Het spel wordt gespeeld op een bord van 10×10.</li>
             <li>Elke speler start met 20 schijven.</li>
