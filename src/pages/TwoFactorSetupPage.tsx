@@ -89,11 +89,11 @@ export default function TwoFactorSetupPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b bg-background px-6 py-3 flex items-center justify-between shrink-0">
+      <header className="sticky top-0 z-10 border-b bg-background px-6 py-3 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <img src="/damzone logo.png" alt="DamZone" className="w-8 h-8" />
           <span className="font-bold text-lg">DamZone</span>
-          <span className="text-muted-foreground text-sm">/ Instellingen</span>
+          <span className="text-muted-foreground text-sm">Instellingen</span>
         </div>
         <div className="flex items-center gap-4 text-sm">
           <span className="text-muted-foreground">

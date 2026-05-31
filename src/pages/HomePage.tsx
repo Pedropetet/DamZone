@@ -77,11 +77,11 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b bg-background px-6 py-3 flex items-center justify-between shrink-0">
+      <header className="sticky top-0 z-10 border-b bg-background px-6 py-3 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <img src="/damzone logo.png" alt="DamZone" className="w-8 h-8" />
           <span className="font-bold text-lg">DamZone</span>
-          <span className="text-muted-foreground text-sm">/ Lobby</span>
+          <span className="text-muted-foreground text-sm">Lobby</span>
         </div>
         <div className="flex items-center gap-4 text-sm">
           <span className="text-muted-foreground">
@@ -110,7 +110,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center pb-20">
         <div className="flex flex-col items-center space-y-6">
           <img src="/damzone logo.png" alt="DamZone logo" className="w-36 h-36" />
           <h1 className="text-4xl font-bold">DamZone</h1>

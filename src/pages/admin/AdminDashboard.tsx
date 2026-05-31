@@ -65,7 +65,7 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-muted/10">
       {/* Topbalk */}
-      <header className="border-b bg-background px-6 py-3 flex items-center justify-between">
+      <header className="sticky top-0 z-10 border-b bg-background px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <img src="/damzone logo.png" alt="DamZone" className="w-8 h-8" />
           <span className="font-bold text-lg">DamZone Admin</span>

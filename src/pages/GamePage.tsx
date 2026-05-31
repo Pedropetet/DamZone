@@ -250,11 +250,11 @@ export default function GamePage() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="border-b bg-background px-6 py-3 flex items-center justify-between">
+      <header className="sticky top-0 z-10 border-b bg-background px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <img src="/damzone logo.png" alt="DamZone" className="w-7 h-7" />
           <span className="font-bold">DamZone</span>
-          <span className="text-muted-foreground text-sm">/ Spel</span>
+          <span className="text-muted-foreground text-sm">Spel</span>
         </div>
         <div className="flex items-center gap-4 text-sm">
           <span className="text-muted-foreground">

@@ -47,16 +47,16 @@ export function AdminGames() {
       {games.length === 0 ? (
         <p className="text-sm text-muted-foreground">Nog geen spellen gespeeld.</p>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto overflow-y-auto max-h-[450px]">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b text-left text-muted-foreground">
-                <th className="pb-2 pr-6 font-medium">ID</th>
-                <th className="pb-2 pr-6 font-medium">Status</th>
-                <th className="pb-2 pr-6 font-medium">Spelers</th>
-                <th className="pb-2 pr-6 font-medium">Winnaar</th>
-                <th className="pb-2 pr-6 font-medium">Gestart</th>
-                <th className="pb-2 font-medium">Aangemaakt</th>
+              <tr className="border-b text-muted-foreground sticky top-0 bg-background z-10">
+                <th className="py-2 pr-6 font-medium text-left">ID</th>
+                <th className="py-2 pr-6 font-medium text-left">Status</th>
+                <th className="py-2 pr-6 font-medium text-left">Spelers</th>
+                <th className="py-2 pr-6 font-medium text-left">Winnaar</th>
+                <th className="py-2 pr-6 font-medium text-left">Gestart</th>
+                <th className="py-2 font-medium text-left">Aangemaakt</th>
               </tr>
             </thead>
             <tbody>
