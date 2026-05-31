@@ -65,9 +65,9 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/10 flex flex-col">
+    <div className="min-h-screen bg-muted/10">
       {/* Topbalk */}
-      <header className="sticky top-0 z-10 border-b bg-background px-6 py-2 flex items-center justify-between">
+      <header className="sticky top-0 z-10 border-b bg-background px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <img src="/damzone logo.png" alt="DamZone" className="w-8 h-8" />
           <span className="font-bold text-lg">DamZone Admin</span>
@@ -91,7 +91,7 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-6 py-6">
+      <div className="max-w-6xl mx-auto px-6 py-8">
         {/* Tabbladbalk */}
         <div className="flex gap-1 mb-8 border-b">
           {(["overview", "users", "games"] as Tab[]).map((tab) => (

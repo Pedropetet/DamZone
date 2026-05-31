@@ -248,9 +248,9 @@ export default function GamePage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-screen flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-10 border-b bg-background px-6 py-2 flex items-center justify-between">
+      <header className="shrink-0 border-b bg-background px-6 py-2 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <img src="/damzone logo.png" alt="DamZone" className="w-7 h-7" />
           <span className="font-bold">DamZone</span>
@@ -269,8 +269,8 @@ export default function GamePage() {
         </div>
       </header>
 
-      {/* Spel content — content start bovenaan zodat spelerinfo altijd zichtbaar is */}
-      <div className="flex-1 flex flex-col items-center justify-start py-4 px-6">
+      {/* Spel content — scroll bevat binnen deze pagina zodat body-scroll niet overloopt */}
+      <div className="flex-1 overflow-y-auto flex flex-col items-center justify-start py-4 px-6">
         {/* Spelinfo + bord + chat als één gecentreerde groep */}
         <div className="flex flex-col">
           {/* Spelinfo boven bord + chat — breedte volgt automatisch */}
