@@ -16,6 +16,12 @@ const STATUS_COLOR: Record<string, string> = {
   abandoned: "bg-gray-100 text-gray-500",
 };
 
+function getWinner(game: AdminGame): string {
+  if (game.status === "abandoned") return "Geen winnaar";
+  if (!game.winnerId) return game.status === "finished" ? "Gelijkspel" : "—";
+  return game.players.find((p) => p.userId === game.winnerId)?.username ?? "Onbekend";
+}
+
 export function AdminGames() {
   const { token } = useAuth();
   const [games, setGames] = useState<AdminGame[]>([]);
@@ -48,6 +54,7 @@ export function AdminGames() {
                 <th className="pb-2 pr-6 font-medium">ID</th>
                 <th className="pb-2 pr-6 font-medium">Status</th>
                 <th className="pb-2 pr-6 font-medium">Spelers</th>
+                <th className="pb-2 pr-6 font-medium">Winnaar</th>
                 <th className="pb-2 pr-6 font-medium">Gestart</th>
                 <th className="pb-2 font-medium">Aangemaakt</th>
               </tr>
@@ -73,6 +80,9 @@ export function AdminGames() {
                           .map((p) => `${p.username} (${p.color === "white" ? "⚪" : "⚫"})`)
                           .join(" vs ")
                       : <span className="text-muted-foreground">—</span>}
+                  </td>
+                  <td className="py-3 pr-6 text-muted-foreground">
+                    {getWinner(game)}
                   </td>
                   <td className="py-3 pr-6 text-muted-foreground">
                     {game.startedAt

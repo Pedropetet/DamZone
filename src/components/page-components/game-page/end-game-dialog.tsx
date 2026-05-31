@@ -44,7 +44,12 @@ export function EndGameDialog({
 
   return (
     <Dialog open={open}>
-      <DialogContent className="text-center">
+      <DialogContent
+        className="text-center"
+        showCloseButton={false}
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle className="text-2xl">{message}</DialogTitle>
         </DialogHeader>

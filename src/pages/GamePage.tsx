@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { socketService } from "@/services/socketService";
@@ -13,6 +13,8 @@ import { Board } from "../components/page-components/game-page/gameboard";
 import { EndGameDialog } from "../components/page-components/game-page/end-game-dialog";
 import { Chat } from "../components/page-components/game-page/chat";
 
+const SESSION_KEY = "damzone_active_game";
+
 interface LocationState {
   game: Game;
   playerColor: "white" | "black";
@@ -20,14 +22,32 @@ interface LocationState {
   opponentUsername: string;
 }
 
+interface SavedSession {
+  gameId: string;
+  playerColor: "white" | "black";
+  opponentUsername: string;
+}
+
+function readSavedSession(): SavedSession | null {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    return raw ? (JSON.parse(raw) as SavedSession) : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function GamePage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
 
   const state = location.state as LocationState | null;
-  const playerColor = state?.playerColor ?? null;
-  const opponentUsername = state?.opponentUsername ?? "Tegenstander";
+  const savedSession = useRef<SavedSession | null>(state ? null : readSavedSession());
+
+  const playerColor = state?.playerColor ?? savedSession.current?.playerColor ?? null;
+  const opponentUsername =
+    state?.opponentUsername ?? savedSession.current?.opponentUsername ?? "Tegenstander";
 
   const [game, setGame] = useState<Game | null>(state?.game ?? null);
   const [selectedPiece, setSelectedPiece] = useState<Piece | null>(null);
@@ -35,9 +55,41 @@ export default function GamePage() {
   const [movablePieces, setMovablePieces] = useState<Piece[]>([]);
   const [showEndDialog, setShowEndDialog] = useState(false);
   const [opponentDisconnected, setOpponentDisconnected] = useState(false);
+  const [gameAbandoned, setGameAbandoned] = useState(false);
+  const [rejoinError, setRejoinError] = useState<string | null>(null);
 
   const isMyTurn = game?.currentTurnColor === playerColor;
-  const socket = socketService.get();
+
+  // Rejoin flow: pagina vernieuwd, geen location.state maar wel sessionStorage
+  useEffect(() => {
+    if (state || !savedSession.current || !token) return;
+
+    const { gameId } = savedSession.current;
+    const sock = socketService.connect(token);
+
+    const handleRejoinFailed = () => {
+      sessionStorage.removeItem(SESSION_KEY);
+      setRejoinError("Spel niet meer actief");
+    };
+    sock.once("game:rejoin_failed", handleRejoinFailed);
+
+    fetch(`/api/games/${gameId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error("not_found");
+        return r.json() as Promise<Game>;
+      })
+      .then((fetchedGame) => {
+        setGame(fetchedGame);
+        sock.emit("game:rejoin", { gameId });
+      })
+      .catch(() => {
+        sock.off("game:rejoin_failed", handleRejoinFailed);
+        sessionStorage.removeItem(SESSION_KEY);
+        setRejoinError("Spel niet meer actief");
+      });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Beweegbare stukken bijhouden op basis van spelstatus
   useEffect(() => {
@@ -54,7 +106,8 @@ export default function GamePage() {
     setMovablePieces(getMovablePieces(game, playerColor));
   }, [game, isMyTurn, playerColor]);
 
-  // Socket.io game-event listeners
+  // Socket event listeners — opnieuw koppelen zodra socket beschikbaar is
+  const socket = socketService.get();
   useEffect(() => {
     if (!socket) return;
 
@@ -69,10 +122,20 @@ export default function GamePage() {
         prev ? { ...prev, status: "finished", winnerId } : prev
       );
       setShowEndDialog(true);
+      sessionStorage.removeItem(SESSION_KEY);
     });
 
     socket.on("game:opponent_disconnected", () => {
       setOpponentDisconnected(true);
+    });
+
+    socket.on("game:opponent_reconnected", () => {
+      setOpponentDisconnected(false);
+    });
+
+    socket.on("game:abandoned", () => {
+      sessionStorage.removeItem(SESSION_KEY);
+      setGameAbandoned(true);
     });
 
     socket.on("game:error", ({ message }: { message: string }) => {
@@ -83,12 +146,37 @@ export default function GamePage() {
       socket.off("game:state");
       socket.off("game:ended");
       socket.off("game:opponent_disconnected");
+      socket.off("game:opponent_reconnected");
+      socket.off("game:abandoned");
       socket.off("game:error");
     };
   }, [socket]);
 
-  // Geen routerstate — geen actief spel
-  if (!game || !state) {
+  function handleBackHome() {
+    socket?.emit("game:leave");
+    sessionStorage.removeItem(SESSION_KEY);
+    navigate("/home");
+  }
+
+  // Fout bij herverbinden
+  if (rejoinError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+        <p className="text-muted-foreground">
+          {rejoinError}. Ga naar de lobby om een nieuw spel te starten.
+        </p>
+        <button
+          onClick={() => navigate("/home")}
+          className="text-blue-500 hover:underline"
+        >
+          Naar lobby
+        </button>
+      </div>
+    );
+  }
+
+  // Geen state en geen sessionStorage
+  if (!state && !savedSession.current && !game) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
         <p className="text-muted-foreground">
@@ -98,11 +186,37 @@ export default function GamePage() {
           onClick={() => navigate("/home")}
           className="text-blue-500 hover:underline"
         >
-          Terug naar lobby
+          Naar lobby
         </button>
       </div>
     );
   }
+
+  // Laden tijdens herverbinding
+  if (!game && savedSession.current) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-muted-foreground">Verbinding herstellen…</p>
+      </div>
+    );
+  }
+
+  // Tegenstander heeft het spel verlaten (abandon na 30s)
+  if (gameAbandoned) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+        <p className="text-lg font-medium">Tegenstander heeft het spel verlaten.</p>
+        <button
+          onClick={() => navigate("/home")}
+          className="text-blue-500 hover:underline"
+        >
+          Naar lobby
+        </button>
+      </div>
+    );
+  }
+
+  if (!game || !playerColor) return null;
 
   function handlePieceClick(piece: Piece) {
     if (!isMyTurn || piece.color !== playerColor) return;
@@ -134,55 +248,78 @@ export default function GamePage() {
   }
 
   return (
-    <div className="p-4">
+    <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between mb-3 max-w-[800px]">
-        <h2 className="text-xl font-semibold">
-          Jij speelt {playerColor === "white" ? "⚪ Wit" : "⚫ Zwart"}
-        </h2>
-        <span className="text-sm text-muted-foreground">
-          vs <strong>{opponentUsername}</strong>
-        </span>
-      </div>
-
-      {/* Beurt-indicator */}
-      <p className="mb-4 text-sm max-w-[800px]">
-        {opponentDisconnected ? (
-          <span className="text-amber-600 font-medium">
-            Tegenstander heeft de verbinding verbroken.
+      <header className="border-b bg-background px-6 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <img src="/damzone logo.png" alt="DamZone" className="w-7 h-7" />
+          <span className="font-bold">DamZone</span>
+          <span className="text-muted-foreground text-sm">/ Spel</span>
+        </div>
+        <div className="flex items-center gap-4 text-sm">
+          <span className="text-muted-foreground">
+            Ingelogd als <strong>{user?.username}</strong>
           </span>
-        ) : isMyTurn ? (
-          <span className="text-green-600 font-medium">Jij bent aan zet</span>
-        ) : (
-          <span className="text-muted-foreground">Wacht op tegenstander…</span>
-        )}
-      </p>
+          <button
+            onClick={handleBackHome}
+            className="text-blue-500 hover:underline"
+          >
+            Naar lobby
+          </button>
+        </div>
+      </header>
 
-      {/* Bord + Chat naast elkaar */}
-      <div className="flex gap-4 items-start">
-        <Board
-          board={game.board}
-          selectedPiece={selectedPiece}
-          movablePieces={movablePieces}
-          validMoves={validMoves}
-          onPieceClick={handlePieceClick}
-          onSquareClick={handleSquareClick}
-        />
+      {/* Spel content — gecentreerd op de pagina */}
+      <div className="flex-1 flex flex-col items-center justify-center p-6">
+        {/* Spelinfo boven bord + chat */}
+        <div className="flex items-center justify-between w-full max-w-[760px] mb-3">
+          <h2 className="text-xl font-semibold">
+            Jij speelt {playerColor === "white" ? "⚪ Wit" : "⚫ Zwart"}
+          </h2>
+          <span className="text-sm text-muted-foreground">
+            vs <strong>{opponentUsername}</strong>
+          </span>
+        </div>
 
-        <div className="w-72 h-[500px]">
-          <Chat
-            gameId={game.id}
-            socket={socket}
-            currentUsername={user?.username ?? ""}
+        {/* Beurt-indicator */}
+        <p className="w-full max-w-[760px] mb-4 text-sm">
+          {opponentDisconnected ? (
+            <span className="text-amber-600 font-medium">
+              Tegenstander heeft de verbinding verbroken. Wacht op herverbinding…
+            </span>
+          ) : isMyTurn ? (
+            <span className="text-green-600 font-medium">Jij bent aan zet</span>
+          ) : (
+            <span className="text-muted-foreground">Wacht op tegenstander…</span>
+          )}
+        </p>
+
+        {/* Bord + Chat naast elkaar, gecentreerd */}
+        <div className="flex gap-4 items-start">
+          <Board
+            board={game.board}
+            selectedPiece={selectedPiece}
+            movablePieces={movablePieces}
+            validMoves={validMoves}
+            onPieceClick={handlePieceClick}
+            onSquareClick={handleSquareClick}
           />
+
+          <div className="w-72 h-[500px]">
+            <Chat
+              gameId={game.id}
+              socket={socket}
+              currentUsername={user?.username ?? ""}
+            />
+          </div>
         </div>
       </div>
 
       <EndGameDialog
         open={showEndDialog}
-        playerColor={playerColor!}
+        playerColor={playerColor}
         game={game}
-        onBackHome={() => navigate("/home")}
+        onBackHome={handleBackHome}
       />
     </div>
   );

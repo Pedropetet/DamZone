@@ -32,6 +32,14 @@ export default function HomePage() {
 
     socket.on("game:start", (data: GameStartPayload) => {
       setStatus("starting");
+      sessionStorage.setItem(
+        "damzone_active_game",
+        JSON.stringify({
+          gameId: data.gameId,
+          playerColor: data.playerColor,
+          opponentUsername: data.opponentUsername,
+        })
+      );
       navigate("/game", {
         state: {
           game: data.game,

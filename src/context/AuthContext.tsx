@@ -11,6 +11,7 @@ interface AuthContextType {
   token: string | null;
   login: (token: string, user: AuthUser) => void;
   logout: () => void;
+  updateUser: (updates: Partial<AuthUser>) => void;
   isAuthenticated: boolean;
 }
 
@@ -39,15 +40,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }
 
+  function updateUser(updates: Partial<AuthUser>) {
+    setUser((prev) => {
+      if (!prev) return null;
+      const updated = { ...prev, ...updates };
+      localStorage.setItem("user", JSON.stringify(updated));
+      return updated;
+    });
+  }
+
   return (
     <AuthContext.Provider
-      value={{ user, token, login, logout, isAuthenticated: !!token }}
+      value={{ user, token, login, logout, updateUser, isAuthenticated: !!token }}
     >
       {children}
     </AuthContext.Provider>
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth moet binnen AuthProvider worden gebruikt");

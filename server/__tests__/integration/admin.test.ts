@@ -51,6 +51,7 @@ describe("Toegangsbeheer admin-routes", () => {
   });
 
   it("GET /api/admin/users → 403 met player-token", async () => {
+    mockUser.findUnique.mockResolvedValueOnce({ role: "player" });
     const res = await request(app)
       .get("/api/admin/users")
       .set("Authorization", `Bearer ${makeToken("player")}`);
@@ -63,6 +64,7 @@ describe("Toegangsbeheer admin-routes", () => {
   });
 
   it("GET /api/admin/games → 403 met player-token", async () => {
+    mockUser.findUnique.mockResolvedValueOnce({ role: "player" });
     const res = await request(app)
       .get("/api/admin/games")
       .set("Authorization", `Bearer ${makeToken("player")}`);
@@ -74,6 +76,7 @@ describe("Toegangsbeheer admin-routes", () => {
 
 describe("GET /api/admin/users", () => {
   it("geeft lijst terug voor admin", async () => {
+    mockUser.findUnique.mockResolvedValueOnce({ role: "admin" }); // requireRole check
     mockUser.findMany.mockResolvedValue([
       {
         id: "u1",
@@ -99,7 +102,9 @@ describe("GET /api/admin/users", () => {
 
 describe("PATCH /api/admin/users/:id/role", () => {
   it("wijzigt de rol van een gebruiker (admin)", async () => {
-    mockUser.findUnique.mockResolvedValue({ id: "u2", username: "Speler" });
+    mockUser.findUnique
+      .mockResolvedValueOnce({ role: "admin" })                    // requireRole check
+      .mockResolvedValueOnce({ id: "u2", username: "Speler" });   // route handler
     mockUser.update.mockResolvedValue({ id: "u2", username: "Speler", role: "admin" });
 
     const res = await request(app)
@@ -112,6 +117,7 @@ describe("PATCH /api/admin/users/:id/role", () => {
   });
 
   it("geeft 400 bij ongeldige rol", async () => {
+    mockUser.findUnique.mockResolvedValueOnce({ role: "admin" }); // requireRole check
     const res = await request(app)
       .patch("/api/admin/users/u2/role")
       .set("Authorization", `Bearer ${makeToken("admin")}`)
@@ -121,7 +127,9 @@ describe("PATCH /api/admin/users/:id/role", () => {
   });
 
   it("geeft 404 als gebruiker niet bestaat", async () => {
-    mockUser.findUnique.mockResolvedValue(null);
+    mockUser.findUnique
+      .mockResolvedValueOnce({ role: "admin" })  // requireRole check
+      .mockResolvedValueOnce(null);              // route handler - not found
     const res = await request(app)
       .patch("/api/admin/users/niet-bestaand/role")
       .set("Authorization", `Bearer ${makeToken("admin")}`)
@@ -134,7 +142,10 @@ describe("PATCH /api/admin/users/:id/role", () => {
 
 describe("DELETE /api/admin/users/:id", () => {
   it("verwijdert een gebruiker (admin)", async () => {
-    mockUser.findUnique.mockResolvedValue({ id: "u2", username: "Speler" });
+    mockUser.findUnique
+      .mockResolvedValueOnce({ role: "admin" })                    // requireRole check
+      .mockResolvedValueOnce({ id: "u2", username: "Speler" });   // route handler
+
     mockUser.delete.mockResolvedValue({});
 
     const res = await request(app)
@@ -146,7 +157,9 @@ describe("DELETE /api/admin/users/:id", () => {
   });
 
   it("geeft 404 als de te verwijderen gebruiker niet bestaat", async () => {
-    mockUser.findUnique.mockResolvedValue(null);
+    mockUser.findUnique
+      .mockResolvedValueOnce({ role: "admin" })  // requireRole check
+      .mockResolvedValueOnce(null);              // route handler - not found
     const res = await request(app)
       .delete("/api/admin/users/onbekend")
       .set("Authorization", `Bearer ${makeToken("admin")}`);

@@ -14,28 +14,48 @@ interface Stats {
 }
 
 export default function AdminDashboard() {
-  const { user, logout, token } = useAuth();
+  const { user, logout, token, updateUser } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [stats, setStats] = useState<Stats | null>(null);
 
   useEffect(() => {
     if (!token) return;
-    Promise.all([
-      adminService.getUsers(token),
-      adminService.getGames(token),
-      fetch("/api/games/active-count", { headers: { Authorization: `Bearer ${token}` } })
-        .then((r) => r.json() as Promise<{ count: number }>),
-    ])
-      .then(([users, games, activeData]) => {
-        setStats({
-          totalUsers: users.length,
-          totalGames: games.length,
-          activeGames: activeData.count,
+
+    const fetchStats = () => {
+      Promise.all([
+        adminService.getUsers(token),
+        adminService.getGames(token),
+        fetch("/api/games/active-count", { headers: { Authorization: `Bearer ${token}` } })
+          .then((r) => {
+            if (r.status === 403) throw Object.assign(new Error("Forbidden"), { status: 403 });
+            return r.json() as Promise<{ count: number }>;
+          }),
+      ])
+        .then(([users, games, activeData]) => {
+          setStats({
+            totalUsers: users.length,
+            totalGames: games.length,
+            activeGames: activeData.count,
+          });
+        })
+        .catch((err: Error & { status?: number }) => {
+          if (
+            err.status === 403 ||
+            err.message?.includes("onvoldoende rechten") ||
+            err.message?.includes("Geen toegang")
+          ) {
+            setStats(null);
+            updateUser({ role: "player" });
+            navigate("/home");
+          }
         });
-      })
-      .catch(() => {});
-  }, [token]);
+    };
+
+    fetchStats();
+    const interval = setInterval(fetchStats, 30_000);
+    return () => clearInterval(interval);
+  }, [token, navigate, updateUser]);
 
   function handleLogout() {
     logout();

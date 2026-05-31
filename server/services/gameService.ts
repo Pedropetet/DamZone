@@ -1,20 +1,22 @@
 import { randomUUID } from "crypto";
+import { PrismaClient } from "../../generated/prisma/index.js";
 import { createInitialBoard } from "../gameLogic/BoardFactory.js";
 import type { Game } from "../Models/Game.js";
 import type { Player } from "../Models/Player.js";
 
+const prisma = new PrismaClient();
+
 interface GameEntry {
   game: Game;
-  // socket.id van de twee spelers
   socketIds: [string, string];
 }
 
 const store = new Map<string, GameEntry>();
 
-export function createGame(
+export async function createGame(
   player1: { userId: string; username: string; socketId: string },
   player2: { userId: string; username: string; socketId: string }
-): Game {
+): Promise<Game> {
   const p1: Player = {
     id: player1.userId,
     username: player1.username,
@@ -30,23 +32,39 @@ export function createGame(
     isConnected: true,
   };
 
+  const board = createInitialBoard();
+  const gameId = randomUUID();
+  const now = new Date();
+
   const game: Game = {
-    id: randomUUID(),
+    id: gameId,
     players: [p1, p2],
     moves: [],
-    board: createInitialBoard(),
+    board,
     currentTurnColor: "white",
     status: "in_progress",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    startedAt: new Date(),
+    createdAt: now,
+    updatedAt: now,
+    startedAt: now,
   };
 
-  store.set(game.id, {
-    game,
-    socketIds: [player1.socketId, player2.socketId],
+  await prisma.game.create({
+    data: {
+      id: gameId,
+      status: "in_progress",
+      currentTurnColor: "white",
+      startedAt: now,
+      boardStateJson: JSON.stringify(board),
+      players: {
+        create: [
+          { username: player1.username, color: "white", userId: player1.userId, isCurrentTurn: true },
+          { username: player2.username, color: "black", userId: player2.userId, isCurrentTurn: false },
+        ],
+      },
+    },
   });
 
+  store.set(gameId, { game, socketIds: [player1.socketId, player2.socketId] });
   return game;
 }
 
@@ -60,4 +78,22 @@ export function removeGame(gameId: string): void {
 
 export function getActiveGameCount(): number {
   return store.size;
+}
+
+export async function persistGameEnd(gameId: string, winnerId: string | null): Promise<void> {
+  await prisma.game.update({
+    where: { id: gameId },
+    data: { status: "finished", endedAt: new Date(), winnerId: winnerId ?? undefined },
+  });
+}
+
+export async function persistGameAbandoned(gameId: string): Promise<void> {
+  try {
+    await prisma.game.update({
+      where: { id: gameId },
+      data: { status: "abandoned", endedAt: new Date() },
+    });
+  } catch {
+    // Game may already be removed from DB
+  }
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Socket } from "socket.io-client";
+import { useAuth } from "@/context/AuthContext";
 
 interface ChatMessage {
   username: string;
@@ -14,9 +15,20 @@ interface ChatProps {
 }
 
 export function Chat({ gameId, socket, currentUsername }: ChatProps) {
+  const { token } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!token) return;
+    fetch(`/api/games/${gameId}/chat`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => (r.ok ? (r.json() as Promise<ChatMessage[]>) : Promise.resolve([])))
+      .then((history) => setMessages(history))
+      .catch(() => {});
+  }, [gameId, token]);
 
   useEffect(() => {
     if (!socket) return;

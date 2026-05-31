@@ -1,11 +1,24 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import jwt from "jsonwebtoken";
 import type { Response, NextFunction } from "express";
-import { requireAuth, type AuthRequest } from "../../middleware/authMiddleware.js";
-import { requireRole } from "../../middleware/rbacMiddleware.js";
+import type { AuthRequest } from "../../middleware/authMiddleware.js";
 
 const TEST_SECRET = "test-jwt-secret";
 process.env.JWT_SECRET = TEST_SECRET;
+
+const { mockUser } = vi.hoisted(() => {
+  const mockUser = { findUnique: vi.fn() };
+  return { mockUser };
+});
+
+vi.mock("../../../generated/prisma/index.js", () => ({
+  PrismaClient: function PrismaClient() {
+    return { user: mockUser };
+  },
+}));
+
+const { requireAuth } = await import("../../middleware/authMiddleware.js");
+const { requireRole } = await import("../../middleware/rbacMiddleware.js");
 
 function makeRes(): Response {
   const res = {
@@ -22,7 +35,7 @@ function makeNext(): NextFunction {
 function makeReq(token?: string): AuthRequest {
   return {
     headers: token ? { authorization: `Bearer ${token}` } : {},
-  } as AuthRequest;
+  } as unknown as AuthRequest;
 }
 
 function validToken(role: "player" | "admin" = "player"): string {
@@ -40,7 +53,7 @@ describe("requireAuth", () => {
     const req = makeReq();
     const res = makeRes();
     const next = makeNext();
-    requireAuth(req, res, next);
+    requireAuth(req as unknown as AuthRequest, res, next);
     expect(res.status).toHaveBeenCalledWith(401);
     expect(next).not.toHaveBeenCalled();
   });
@@ -49,7 +62,7 @@ describe("requireAuth", () => {
     const req = makeReq("dit-is-geen-geldig-token");
     const res = makeRes();
     const next = makeNext();
-    requireAuth(req, res, next);
+    requireAuth(req as unknown as AuthRequest, res, next);
     expect(res.status).toHaveBeenCalledWith(401);
     expect(next).not.toHaveBeenCalled();
   });
@@ -63,12 +76,12 @@ describe("requireAuth", () => {
     const req = makeReq(expired);
     const res = makeRes();
     const next = makeNext();
-    requireAuth(req, res, next);
+    requireAuth(req as unknown as AuthRequest, res, next);
     expect(res.status).toHaveBeenCalledWith(401);
   });
 
   it("roept next() aan bij een geldig token en zet req.user", () => {
-    const req = makeReq(validToken());
+    const req = makeReq(validToken()) as unknown as AuthRequest;
     const res = makeRes();
     const next = makeNext();
     requireAuth(req, res, next);
@@ -86,38 +99,41 @@ describe("requireRole", () => {
     vi.clearAllMocks();
   });
 
-  it("geeft 401 als req.user niet is ingesteld", () => {
-    const req = {} as AuthRequest;
+  it("geeft 401 als req.user niet is ingesteld", async () => {
+    const req = {} as unknown as AuthRequest;
     const res = makeRes();
     const next = makeNext();
-    requireRole("admin")(req, res, next);
+    await requireRole("admin")(req, res, next);
     expect(res.status).toHaveBeenCalledWith(401);
     expect(next).not.toHaveBeenCalled();
   });
 
-  it("geeft 403 als gebruiker niet de vereiste rol heeft", () => {
-    const req = { user: { userId: "u1", username: "U", role: "player" as const } } as AuthRequest;
+  it("geeft 403 als gebruiker niet de vereiste rol heeft", async () => {
+    mockUser.findUnique.mockResolvedValue({ role: "player" });
+    const req = { user: { userId: "u1", username: "U", role: "player" as const } } as unknown as AuthRequest;
     const res = makeRes();
     const next = makeNext();
-    requireRole("admin")(req, res, next);
+    await requireRole("admin")(req, res, next);
     expect(res.status).toHaveBeenCalledWith(403);
     expect(next).not.toHaveBeenCalled();
   });
 
-  it("roept next() aan bij de juiste rol", () => {
-    const req = { user: { userId: "u1", username: "U", role: "admin" as const } } as AuthRequest;
+  it("roept next() aan bij de juiste rol", async () => {
+    mockUser.findUnique.mockResolvedValue({ role: "admin" });
+    const req = { user: { userId: "u1", username: "U", role: "admin" as const } } as unknown as AuthRequest;
     const res = makeRes();
     const next = makeNext();
-    requireRole("admin")(req, res, next);
+    await requireRole("admin")(req, res, next);
     expect(next).toHaveBeenCalled();
     expect(res.status).not.toHaveBeenCalled();
   });
 
-  it("accepteert meerdere geldige rollen", () => {
-    const req = { user: { userId: "u1", username: "U", role: "player" as const } } as AuthRequest;
+  it("accepteert meerdere geldige rollen", async () => {
+    mockUser.findUnique.mockResolvedValue({ role: "player" });
+    const req = { user: { userId: "u1", username: "U", role: "player" as const } } as unknown as AuthRequest;
     const res = makeRes();
     const next = makeNext();
-    requireRole("player", "admin")(req, res, next);
+    await requireRole("player", "admin")(req, res, next);
     expect(next).toHaveBeenCalled();
   });
 });
