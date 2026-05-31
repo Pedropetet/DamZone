@@ -19,6 +19,8 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [stats, setStats] = useState<Stats | null>(null);
 
+  useEffect(() => { window.scrollTo(0, 0); }, []);
+
   useEffect(() => {
     if (!token) return;
 
@@ -63,9 +65,9 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-muted/10">
+    <div className="min-h-screen bg-muted/10 flex flex-col">
       {/* Topbalk */}
-      <header className="sticky top-0 z-10 border-b bg-background px-6 py-2 flex items-center justify-between shrink-0">
+      <header className="sticky top-0 z-10 border-b bg-background px-6 py-2 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <img src="/damzone logo.png" alt="DamZone" className="w-8 h-8" />
           <span className="font-bold text-lg">DamZone Admin</span>
@@ -89,7 +91,6 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto">
       <div className="max-w-6xl mx-auto px-6 py-6">
         {/* Tabbladbalk */}
         <div className="flex gap-1 mb-8 border-b">
@@ -136,7 +137,6 @@ export default function AdminDashboard() {
 
         {/* Spellen-tab */}
         {activeTab === "games" && <AdminGames />}
-      </div>
       </div>
     </div>
   );

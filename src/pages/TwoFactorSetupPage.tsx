@@ -22,6 +22,8 @@ export default function TwoFactorSetupPage() {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => { window.scrollTo(0, 0); }, []);
+
   useEffect(() => {
     if (!token) return;
     authService.me(token).then((profile) => {
@@ -88,7 +90,7 @@ export default function TwoFactorSetupPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="min-h-screen flex flex-col">
       <header className="sticky top-0 z-10 border-b bg-background px-6 py-2 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <img src="/damzone logo.png" alt="DamZone" className="w-8 h-8" />
@@ -99,6 +101,14 @@ export default function TwoFactorSetupPage() {
           <span className="text-muted-foreground">
             Ingelogd als <strong>{user?.username}</strong>
           </span>
+          {user?.role === "admin" && (
+            <button
+              onClick={() => navigate("/admin")}
+              className="text-amber-600 hover:underline font-medium"
+            >
+              Admin
+            </button>
+          )}
           <button
             onClick={() => navigate("/home")}
             className="text-blue-500 hover:underline"
@@ -114,7 +124,7 @@ export default function TwoFactorSetupPage() {
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto flex justify-center pt-8 px-4">
+      <div className="flex-1 flex justify-center pt-8 px-4">
         <div className="w-full max-w-md">
           <Card className="p-6">
             <h2 className="text-lg font-semibold mb-3">Tweestapsverificatie (2FA)</h2>
