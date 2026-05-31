@@ -49,16 +49,16 @@ export function AdminUsers() {
   return (
     <div>
       <h2 className="text-lg font-semibold mb-4">Gebruikers ({users.length})</h2>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto overflow-y-auto max-h-[400px]">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b text-muted-foreground">
-              <th className="py-2 pr-6 font-medium text-left">Gebruikersnaam</th>
-              <th className="py-2 pr-6 font-medium text-left">E-mail</th>
-              <th className="py-2 pr-6 font-medium text-left">Rol</th>
-              <th className="py-2 pr-6 font-medium text-left">2FA</th>
-              <th className="py-2 pr-6 font-medium text-left">Aangemaakt</th>
-              <th className="py-2 font-medium text-left">Acties</th>
+            <tr className="border-b text-muted-foreground sticky top-0 bg-background z-10">
+              <th className="py-2 pr-6 font-medium text-center">Gebruikersnaam</th>
+              <th className="py-2 pr-6 font-medium text-center">E-mail</th>
+              <th className="py-2 pr-6 font-medium text-center">Rol</th>
+              <th className="py-2 pr-6 font-medium text-center">2FA</th>
+              <th className="py-2 pr-6 font-medium text-center">Aangemaakt</th>
+              <th className="py-2 font-medium text-center">Acties</th>
             </tr>
           </thead>
           <tbody>

@@ -88,8 +88,8 @@ export default function TwoFactorSetupPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="sticky top-0 z-10 border-b bg-background px-6 py-3 flex items-center justify-between shrink-0">
+    <div className="h-screen flex flex-col overflow-hidden">
+      <header className="sticky top-0 z-10 border-b bg-background px-6 py-2 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <img src="/damzone logo.png" alt="DamZone" className="w-8 h-8" />
           <span className="font-bold text-lg">DamZone</span>
@@ -114,7 +114,7 @@ export default function TwoFactorSetupPage() {
         </div>
       </header>
 
-      <div className="flex-1 flex justify-center pt-10 px-4">
+      <div className="flex-1 overflow-y-auto flex justify-center pt-8 px-4">
         <div className="w-full max-w-md">
           <Card className="p-6">
             <h2 className="text-lg font-semibold mb-3">Tweestapsverificatie (2FA)</h2>
