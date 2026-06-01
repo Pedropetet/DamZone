@@ -12,6 +12,15 @@ import type { Piece } from "../Models/Piece";
 import { Board } from "../components/page-components/game-page/gameboard";
 import { EndGameDialog } from "../components/page-components/game-page/end-game-dialog";
 import { Chat } from "../components/page-components/game-page/chat";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 const SESSION_KEY = "damzone_active_game";
 
@@ -54,6 +63,7 @@ export default function GamePage() {
   const [validMoves, setValidMoves] = useState<Move[]>([]);
   const [movablePieces, setMovablePieces] = useState<Piece[]>([]);
   const [showEndDialog, setShowEndDialog] = useState(false);
+  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [opponentDisconnected, setOpponentDisconnected] = useState(false);
   const [gameAbandoned, setGameAbandoned] = useState(false);
   const [rejoinError, setRejoinError] = useState<string | null>(null);
@@ -156,6 +166,14 @@ export default function GamePage() {
     socket?.emit("game:leave");
     sessionStorage.removeItem(SESSION_KEY);
     navigate("/home");
+  }
+
+  function handleLeaveClick() {
+    if (!game || game.status === "finished" || gameAbandoned) {
+      handleBackHome();
+    } else {
+      setShowLeaveDialog(true);
+    }
   }
 
   // Fout bij herverbinden
@@ -261,7 +279,7 @@ export default function GamePage() {
             Ingelogd als <strong>{user?.username}</strong>
           </span>
           <button
-            onClick={handleBackHome}
+            onClick={handleLeaveClick}
             className="text-blue-500 hover:underline"
           >
             Naar lobby
@@ -324,6 +342,21 @@ export default function GamePage() {
         game={game}
         onBackHome={handleBackHome}
       />
+
+      <Dialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Spel verlaten</DialogTitle>
+            <DialogDescription>
+              Weet je zeker dat je het spel wilt verlaten? Je tegenstander krijgt de overwinning toegewezen.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowLeaveDialog(false)}>Annuleren</Button>
+            <Button variant="destructive" onClick={handleBackHome}>Verlaten</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
