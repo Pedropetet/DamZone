@@ -48,6 +48,13 @@ export interface AuthUserFull extends AuthUser {
   isTwoFactorEnabled: boolean;
 }
 
+export interface UpdateProfileData {
+  currentPassword: string;
+  username?: string;
+  email?: string;
+  newPassword?: string;
+}
+
 export const authService = {
   register: (data: RegisterData) =>
     request<{ message: string }>("/auth/register", {
@@ -63,4 +70,10 @@ export const authService = {
 
   me: (token: string) =>
     request<AuthUserFull>("/auth/me", { method: "GET" }, token),
+
+  updateProfile: (data: UpdateProfileData, token: string) =>
+    request<{ message: string; user: AuthUser }>("/auth/me", {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }, token),
 };

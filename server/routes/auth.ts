@@ -137,4 +137,59 @@ router.get("/me", requireAuth, async (req: AuthRequest, res) => {
   }
 });
 
+const updateProfileSchema = z.object({
+  currentPassword: z.string().min(1, "Huidig wachtwoord is verplicht"),
+  username: z.string().min(3, "Gebruikersnaam moet minimaal 3 tekens zijn").max(30).optional(),
+  email: z.string().email("Ongeldig e-mailadres").optional(),
+  newPassword: z.string().min(8, "Nieuw wachtwoord moet minimaal 8 tekens zijn").optional(),
+});
+
+// Profiel bijwerken (gebruikersnaam, e-mail of wachtwoord)
+router.patch("/me", requireAuth, async (req: AuthRequest, res) => {
+  const result = updateProfileSchema.safeParse(req.body);
+  if (!result.success) {
+    return res.status(400).json({ error: result.error.issues[0].message });
+  }
+
+  const { currentPassword, username, email, newPassword } = result.data;
+
+  if (!username && !email && !newPassword) {
+    return res.status(400).json({ error: "Geen wijziging opgegeven" });
+  }
+
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user!.userId } });
+    if (!user) return res.status(404).json({ error: "Gebruiker niet gevonden" });
+
+    if (!(await bcrypt.compare(currentPassword, user.passwordHash))) {
+      return res.status(401).json({ error: "Huidig wachtwoord is onjuist" });
+    }
+
+    if (username && username !== user.username) {
+      const taken = await prisma.user.findUnique({ where: { username } });
+      if (taken) return res.status(409).json({ error: "Gebruikersnaam is al in gebruik" });
+    }
+
+    if (email && email !== user.email) {
+      const taken = await prisma.user.findUnique({ where: { email } });
+      if (taken) return res.status(409).json({ error: "E-mailadres is al in gebruik" });
+    }
+
+    const data: Record<string, unknown> = {};
+    if (username) data.username = username;
+    if (email) data.email = email;
+    if (newPassword) data.passwordHash = await bcrypt.hash(newPassword, 12);
+
+    const updated = await prisma.user.update({ where: { id: req.user!.userId }, data });
+
+    return res.json({
+      message: "Profiel bijgewerkt",
+      user: { id: updated.id, username: updated.username, role: updated.role },
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Serverfout bij bijwerken" });
+  }
+});
+
 export default router;
