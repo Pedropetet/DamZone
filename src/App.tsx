@@ -7,7 +7,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import GamePage from "./pages/GamePage";
 import TwoFactorVerifyPage from "./pages/TwoFactorVerifyPage";
-import TwoFactorSetupPage from "./pages/TwoFactorSetupPage";
+import SettingsPage from "./pages/settings/SettingsPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 
 function App() {
@@ -38,7 +38,7 @@ function App() {
             path="/settings"
             element={
               <ProtectedRoute>
-                <TwoFactorSetupPage />
+                <SettingsPage />
               </ProtectedRoute>
             }
           />
