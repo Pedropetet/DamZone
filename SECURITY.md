@@ -18,6 +18,14 @@ Overzicht van de beveiligingsmaatregelen die zijn geïmplementeerd.
 - Verificatie vereist geldige 6-cijferige code (30-seconden venster, 1 stap tolerantie)
 - Inschakelen, uitschakelen en inloggen vereisen altijd een geldige TOTP-code
 
+### Profielwijzigingen (PATCH /api/auth/me)
+
+- Vereist een geldig JWT (`requireAuth`)
+- `currentPassword` wordt altijd geverifieerd via `bcrypt.compare` vóór elke wijziging
+- Uniekheid van nieuwe gebruikersnaam en e-mailadres wordt server-side gecontroleerd (409 bij conflict)
+- `passwordHash` wordt **nooit** teruggestuurd in de response
+- Zod-validatie op alle velden (minimumlengte gebruikersnaam, e-mailformaat, wachtwoordlengte ≥ 8)
+
 ### RBAC (role-based access control)
 - Twee rollen: `player` (standaard) en `admin`
 - `requireRole(...roles)` middleware keurt 403 terug bij onvoldoende rechten
@@ -87,7 +95,7 @@ Helmet is geconfigureerd met:
 
 ---
 
-## Testresultaten (Fase 7 smoke test)
+## Testresultaten (security smoke test)
 
 Uitgevoerd met `node server/scripts/testSecurity.mjs`:
 
@@ -96,6 +104,7 @@ Uitgevoerd met `node server/scripts/testSecurity.mjs`:
 ✅ GET /api/admin/users → 401 (geen token)
 ✅ GET /api/admin/games → 401 (geen token)
 ✅ PATCH /api/admin/users/:id/role → 401 (geen token)
+✅ PATCH /api/auth/me → 401 (geen token)
 ✅ GET /api/admin/users met player-token → 403
 ✅ GET /api/admin/games met player-token → 403
 ✅ Login rate limiter vuurt 429 na 10 pogingen
@@ -104,7 +113,7 @@ Uitgevoerd met `node server/scripts/testSecurity.mjs`:
 ✅ Content-Security-Policy aanwezig
 ```
 
-10/10 geslaagd.
+11/11 geslaagd.
 
 ---
 

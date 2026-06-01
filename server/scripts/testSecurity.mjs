@@ -91,6 +91,9 @@ console.log("1. Protected routes geven 401 zonder token:");
 
   const r4 = await patch("/api/admin/users/fake-id/role", { role: "admin" });
   assert("PATCH /api/admin/users/:id/role → 401", r4.status === 401);
+
+  const r5 = await patch("/api/auth/me", { currentPassword: "x", username: "y" });
+  assert("PATCH /api/auth/me → 401 (geen token)", r5.status === 401);
 }
 
 // ── 2. Admin routes: 403 met player-token ─────────────────────────────────

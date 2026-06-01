@@ -6,6 +6,21 @@ Gebouwd als schoolproject (Windesheim — jaar 2, semester 2).
 
 ---
 
+## Functionaliteiten
+
+| Functie | Beschrijving |
+|---|---|
+| Registreren / inloggen | Gebruikersnaam + wachtwoord, JWT-sessie (1 uur) |
+| Twee-factor-authenticatie | TOTP via Google Authenticator / Authy (in/uitschakelbaar per gebruiker) |
+| Realtime damspel | Socket.io — matchmaking, bord, zetten, slagzetten, dammen |
+| Chat | Realtime chatgeschiedenis per spel, alleen voor deelnemers |
+| Spel verlaten | Bevestigingsdialoog; tegenstander krijgt overwinning als spel actief is |
+| Instellingen | Gebruikersnaam, e-mailadres of wachtwoord wijzigen via `/settings` (tabs: Account / 2FA) |
+| Admin-panel | Gebruikersbeheer (rol wijzigen, verwijderen) en spelenoverzicht via `/admin` |
+| RBAC | Twee rollen: `player` (standaard) en `admin`; admin-link zichtbaar voor admins |
+
+---
+
 ## Tech stack
 
 | Laag | Technologie |
@@ -151,10 +166,11 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
              ▼
 ┌─────────────────────────────────┐
 │  Express-server (poort 3001)    │
-│  • /api/auth      (JWT, 2FA)    │
-│  • /api/admin     (RBAC)        │
-│  • /api/games                   │
-│  • Socket.io (game + chat)      │
+│  • /api/auth      (JWT, 2FA, profiel) │
+│  • /api/admin     (RBAC)              │
+│  • /api/games                         │
+│  • /api/2fa       (TOTP setup)        │
+│  • Socket.io (game + chat)            │
 └────────────┬────────────────────┘
              │ Prisma ORM
              ▼
@@ -190,6 +206,16 @@ Gewone spelers kunnen zichzelf registreren via `/register`.
 | `npm run cy:open` | Cypress (interactief) |
 | `npm run cy:run` | Cypress (headless) |
 | `npm run lint` | ESLint |
+
+---
+
+## Bekende beperkingen
+
+| Beperking | Toelichting |
+|---|---|
+| Pagina verversen tijdens spel | Bij F5 probeert de client opnieuw verbinding te maken via `sessionStorage`. Als de server de sessie niet meer kent (server herstart, spel beëindigd), verschijnt een foutmelding. Navigeer dan handmatig naar de lobby. |
+| JWT-sessie na profielwijziging | Na het wijzigen van gebruikersnaam blijft het token geldig met de oude naam tot vervaldatum (1 uur). De weergave in de UI wordt wel direct bijgewerkt via `updateUser`. |
+| Rate limiting in productie | De rate-limiter gebruikt in-memory opslag. Bij meerdere server-instanties is een gedeelde Redis-store nodig. |
 
 ---
 

@@ -11,6 +11,7 @@ const { mockUser } = vi.hoisted(() => {
   const mockUser = {
     findUnique: vi.fn(),
     create: vi.fn(),
+    update: vi.fn(),
   };
   return { mockUser };
 });
@@ -145,6 +146,91 @@ describe("POST /api/auth/login", () => {
   it("geeft 400 bij lege body", async () => {
     const res = await request(app).post("/api/auth/login").send({});
     expect(res.status).toBe(400);
+  });
+});
+
+// ── PATCH /api/auth/me ────────────────────────────────────────────────────
+
+describe("PATCH /api/auth/me", () => {
+  function playerToken() {
+    return jwt.sign(
+      { userId: "user-1", username: "SpelerA", role: "player" },
+      process.env.JWT_SECRET!,
+      { expiresIn: "1h" }
+    );
+  }
+
+  it("geeft 401 zonder token", async () => {
+    const res = await request(app)
+      .patch("/api/auth/me")
+      .send({ currentPassword: "Wachtwoord1!", username: "NieuweNaam" });
+    expect(res.status).toBe(401);
+  });
+
+  it("geeft 400 als geen veld is opgegeven", async () => {
+    const res = await request(app)
+      .patch("/api/auth/me")
+      .set("Authorization", `Bearer ${playerToken()}`)
+      .send({ currentPassword: "Wachtwoord1!" });
+    expect(res.status).toBe(400);
+  });
+
+  it("geeft 401 bij fout huidig wachtwoord", async () => {
+    const bcrypt = await import("bcryptjs");
+    const hash = await bcrypt.hash("JuistWW1!", 12);
+    mockUser.findUnique.mockResolvedValueOnce({
+      id: "user-1", username: "SpelerA", email: "a@a.nl", passwordHash: hash, role: "player",
+    });
+    const res = await request(app)
+      .patch("/api/auth/me")
+      .set("Authorization", `Bearer ${playerToken()}`)
+      .send({ currentPassword: "FoutWW!", username: "NieuweNaam" });
+    expect(res.status).toBe(401);
+  });
+
+  it("geeft 409 als gebruikersnaam al in gebruik is", async () => {
+    const bcrypt = await import("bcryptjs");
+    const hash = await bcrypt.hash("Wachtwoord1!", 12);
+    mockUser.findUnique
+      .mockResolvedValueOnce({ id: "user-1", username: "SpelerA", email: "a@a.nl", passwordHash: hash, role: "player" })
+      .mockResolvedValueOnce({ id: "user-2" }); // username bezet
+    const res = await request(app)
+      .patch("/api/auth/me")
+      .set("Authorization", `Bearer ${playerToken()}`)
+      .send({ currentPassword: "Wachtwoord1!", username: "BestaandeNaam" });
+    expect(res.status).toBe(409);
+    expect(res.body.error).toContain("Gebruikersnaam");
+  });
+
+  it("geeft 409 als e-mailadres al in gebruik is", async () => {
+    const bcrypt = await import("bcryptjs");
+    const hash = await bcrypt.hash("Wachtwoord1!", 12);
+    // Route stuurt alleen email → geen username-check, wel email-check
+    mockUser.findUnique
+      .mockResolvedValueOnce({ id: "user-1", username: "SpelerA", email: "a@a.nl", passwordHash: hash, role: "player" })
+      .mockResolvedValueOnce({ id: "user-2" }); // email bezet
+    const res = await request(app)
+      .patch("/api/auth/me")
+      .set("Authorization", `Bearer ${playerToken()}`)
+      .send({ currentPassword: "Wachtwoord1!", email: "bezet@example.com" });
+    expect(res.status).toBe(409);
+    expect(res.body.error).toContain("E-mailadres");
+  });
+
+  it("wijzigt gebruikersnaam succesvol (200)", async () => {
+    const bcrypt = await import("bcryptjs");
+    const hash = await bcrypt.hash("Wachtwoord1!", 12);
+    mockUser.findUnique
+      .mockResolvedValueOnce({ id: "user-1", username: "SpelerA", email: "a@a.nl", passwordHash: hash, role: "player" })
+      .mockResolvedValueOnce(null); // username niet bezet
+    mockUser.update.mockResolvedValueOnce({ id: "user-1", username: "NieuweNaam", role: "player" });
+    const res = await request(app)
+      .patch("/api/auth/me")
+      .set("Authorization", `Bearer ${playerToken()}`)
+      .send({ currentPassword: "Wachtwoord1!", username: "NieuweNaam" });
+    expect(res.status).toBe(200);
+    expect(res.body.user.username).toBe("NieuweNaam");
+    expect(res.body.user.passwordHash).toBeUndefined();
   });
 });
 
