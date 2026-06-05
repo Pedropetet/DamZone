@@ -2,8 +2,14 @@
 
 describe("Lobby & Admin-panel", () => {
   beforeEach(() => {
-    cy.login("admin", "Admin1234!");
-    cy.url().should("include", "/home");
+    // cy.session hergebruikt de gecachede sessie (localStorage/cookies) zodat
+    // het login-endpoint maar één keer per run wordt aangeroepen i.p.v. per test.
+    // Dit voorkomt dat de rate-limiter (10/15 min) wordt overschreden.
+    cy.session("admin-session", () => {
+      cy.login("admin", "Admin1234!");
+      cy.url().should("include", "/home");
+    });
+    cy.visit("/home");
   });
 
   it("toont de 'Zoek tegenstander'-knop op de homepagina", () => {
