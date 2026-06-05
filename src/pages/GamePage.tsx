@@ -52,11 +52,16 @@ export default function GamePage() {
   const { user, token } = useAuth();
 
   const state = location.state as LocationState | null;
-  const savedSession = useRef<SavedSession | null>(state ? null : readSavedSession());
+  const savedSession = useRef<SavedSession | null>(
+    state ? null : readSavedSession(),
+  );
 
-  const playerColor = state?.playerColor ?? savedSession.current?.playerColor ?? null;
+  const playerColor =
+    state?.playerColor ?? savedSession.current?.playerColor ?? null;
   const opponentUsername =
-    state?.opponentUsername ?? savedSession.current?.opponentUsername ?? "Tegenstander";
+    state?.opponentUsername ??
+    savedSession.current?.opponentUsername ??
+    "Tegenstander";
 
   const [game, setGame] = useState<Game | null>(state?.game ?? null);
   const [selectedPiece, setSelectedPiece] = useState<Piece | null>(null);
@@ -129,7 +134,7 @@ export default function GamePage() {
 
     socket.on("game:ended", ({ winnerId }: { winnerId: string }) => {
       setGame((prev) =>
-        prev ? { ...prev, status: "finished", winnerId } : prev
+        prev ? { ...prev, status: "finished", winnerId } : prev,
       );
       setShowEndDialog(true);
       sessionStorage.removeItem(SESSION_KEY);
@@ -223,7 +228,9 @@ export default function GamePage() {
   if (gameAbandoned) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <p className="text-lg font-medium">Tegenstander heeft het spel verlaten.</p>
+        <p className="text-lg font-medium">
+          Tegenstander heeft het spel verlaten.
+        </p>
         <button
           onClick={() => navigate("/home")}
           className="text-blue-500 hover:underline"
@@ -305,12 +312,17 @@ export default function GamePage() {
           <p className="mb-3 text-sm">
             {opponentDisconnected ? (
               <span className="text-amber-600 font-medium">
-                Tegenstander heeft de verbinding verbroken. Wacht op herverbinding…
+                Tegenstander heeft de verbinding verbroken. Wacht op
+                herverbinding…
               </span>
             ) : isMyTurn ? (
-              <span className="text-green-600 font-medium">Jij bent aan zet</span>
+              <span className="text-green-600 font-medium">
+                Jij bent aan zet
+              </span>
             ) : (
-              <span className="text-muted-foreground">Wacht op tegenstander…</span>
+              <span className="text-muted-foreground">
+                Wacht op tegenstander…
+              </span>
             )}
           </p>
 
@@ -348,12 +360,17 @@ export default function GamePage() {
           <DialogHeader>
             <DialogTitle>Spel verlaten</DialogTitle>
             <DialogDescription>
-              Weet je zeker dat je het spel wilt verlaten? Je tegenstander krijgt de overwinning toegewezen.
+              Weet je zeker dat je het spel wilt verlaten? Je tegenstander
+              krijgt de overwinning toegewezen.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowLeaveDialog(false)}>Annuleren</Button>
-            <Button variant="destructive" onClick={handleBackHome}>Verlaten</Button>
+            <Button variant="outline" onClick={() => setShowLeaveDialog(false)}>
+              Annuleren
+            </Button>
+            <Button variant="destructive" onClick={handleBackHome}>
+              Verlaten
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
