@@ -18,7 +18,7 @@ export function Chat({ gameId, socket, currentUsername }: ChatProps) {
   const { token } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -41,9 +41,12 @@ export function Chat({ gameId, socket, currentUsername }: ChatProps) {
     return () => { socket.off("chat:message", handler); };
   }, [socket]);
 
-  // Scroll naar nieuwste bericht
+  // Scroll naar nieuwste bericht — direct op de container zodat de parent
+  // scroll-context (GamePage) niet meescrollt via scrollIntoView-bubbling
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = messagesRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
   function handleSend(e: React.FormEvent) {
@@ -62,7 +65,7 @@ export function Chat({ gameId, socket, currentUsername }: ChatProps) {
       </div>
 
       {/* Berichtenlijst */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0">
+      <div ref={messagesRef} className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0">
         {messages.length === 0 && (
           <p className="text-xs text-muted-foreground text-center mt-6">
             Nog geen berichten. Zeg hallo!
@@ -88,7 +91,6 @@ export function Chat({ gameId, socket, currentUsername }: ChatProps) {
             </div>
           );
         })}
-        <div ref={bottomRef} />
       </div>
 
       {/* Invoer */}
