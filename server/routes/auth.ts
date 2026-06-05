@@ -53,12 +53,12 @@ router.post("/register", registerLimiter, async (req, res) => {
   try {
     const existingUsername = await prisma.user.findUnique({ where: { username } });
     if (existingUsername) {
-      return res.status(409).json({ error: "Gebruikersnaam is al in gebruik" });
+      return void res.status(409).json({ error: "Gebruikersnaam is al in gebruik" });
     }
 
     const existingEmail = await prisma.user.findUnique({ where: { email } });
     if (existingEmail) {
-      return res.status(409).json({ error: "E-mailadres is al in gebruik" });
+      return void res.status(409).json({ error: "E-mailadres is al in gebruik" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
@@ -66,20 +66,20 @@ router.post("/register", registerLimiter, async (req, res) => {
       data: { username, email, passwordHash: hashedPassword, role: "player" },
     });
 
-    return res.status(201).json({
+    return void res.status(201).json({
       message: "Registratie gelukt",
       user: { id: user.id, username: user.username },
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "Serverfout bij registratie" });
+    return void res.status(500).json({ error: "Serverfout bij registratie" });
   }
 });
 
 router.post("/login", loginLimiter, async (req, res) => {
   const result = loginSchema.safeParse(req.body);
   if (!result.success) {
-    return res.status(400).json({ error: result.error.issues[0].message });
+    return void res.status(400).json({ error: result.error.issues[0].message });
   }
 
   const { username, password } = result.data;
@@ -99,7 +99,7 @@ router.post("/login", loginLimiter, async (req, res) => {
         process.env.JWT_SECRET!,
         { expiresIn: "5m" }
       );
-      return res.json({ requiresTwoFactor: true, tempToken });
+      return void res.json({ requiresTwoFactor: true, tempToken });
     }
 
     const token = jwt.sign(
@@ -108,14 +108,14 @@ router.post("/login", loginLimiter, async (req, res) => {
       { expiresIn: "1h" }
     );
 
-    return res.json({
+    return void res.json({
       message: "Login succesvol",
       token,
       user: { id: user.id, username: user.username, role: user.role },
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "Serverfout bij login" });
+    return void res.status(500).json({ error: "Serverfout bij login" });
   }
 });
 
@@ -123,9 +123,9 @@ router.post("/login", loginLimiter, async (req, res) => {
 router.get("/me", requireAuth, async (req: AuthRequest, res) => {
   try {
     const user = await prisma.user.findUnique({ where: { id: req.user!.userId } });
-    if (!user) return res.status(404).json({ error: "Gebruiker niet gevonden" });
+    if (!user) return void res.status(404).json({ error: "Gebruiker niet gevonden" });
 
-    return res.json({
+    return void res.json({
       id: user.id,
       username: user.username,
       role: user.role,
@@ -133,7 +133,7 @@ router.get("/me", requireAuth, async (req: AuthRequest, res) => {
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "Serverfout" });
+    return void res.status(500).json({ error: "Serverfout" });
   }
 });
 
@@ -148,31 +148,31 @@ const updateProfileSchema = z.object({
 router.patch("/me", requireAuth, async (req: AuthRequest, res) => {
   const result = updateProfileSchema.safeParse(req.body);
   if (!result.success) {
-    return res.status(400).json({ error: result.error.issues[0].message });
+    return void res.status(400).json({ error: result.error.issues[0].message });
   }
 
   const { currentPassword, username, email, newPassword } = result.data;
 
   if (!username && !email && !newPassword) {
-    return res.status(400).json({ error: "Geen wijziging opgegeven" });
+    return void res.status(400).json({ error: "Geen wijziging opgegeven" });
   }
 
   try {
     const user = await prisma.user.findUnique({ where: { id: req.user!.userId } });
-    if (!user) return res.status(404).json({ error: "Gebruiker niet gevonden" });
+    if (!user) return void res.status(404).json({ error: "Gebruiker niet gevonden" });
 
     if (!(await bcrypt.compare(currentPassword, user.passwordHash))) {
-      return res.status(401).json({ error: "Huidig wachtwoord is onjuist" });
+      return void res.status(401).json({ error: "Huidig wachtwoord is onjuist" });
     }
 
     if (username && username !== user.username) {
       const taken = await prisma.user.findUnique({ where: { username } });
-      if (taken) return res.status(409).json({ error: "Gebruikersnaam is al in gebruik" });
+      if (taken) return void res.status(409).json({ error: "Gebruikersnaam is al in gebruik" });
     }
 
     if (email && email !== user.email) {
       const taken = await prisma.user.findUnique({ where: { email } });
-      if (taken) return res.status(409).json({ error: "E-mailadres is al in gebruik" });
+      if (taken) return void res.status(409).json({ error: "E-mailadres is al in gebruik" });
     }
 
     const data: Record<string, unknown> = {};
@@ -182,13 +182,13 @@ router.patch("/me", requireAuth, async (req: AuthRequest, res) => {
 
     const updated = await prisma.user.update({ where: { id: req.user!.userId }, data });
 
-    return res.json({
+    return void res.json({
       message: "Profiel bijgewerkt",
       user: { id: updated.id, username: updated.username, role: updated.role },
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "Serverfout bij bijwerken" });
+    return void res.status(500).json({ error: "Serverfout bij bijwerken" });
   }
 });
 

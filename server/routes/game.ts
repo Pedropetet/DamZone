@@ -20,7 +20,7 @@ router.get("/:id/chat", async (req, res) => {
       orderBy: { timestamp: "asc" },
       select: { username: true, message: true, timestamp: true },
     });
-    return res.json(
+    return void res.json(
       messages.map((m) => ({
         username: m.username,
         message: m.message,
@@ -28,14 +28,14 @@ router.get("/:id/chat", async (req, res) => {
       }))
     );
   } catch {
-    return res.status(500).json({ error: "Serverfout" });
+    return void res.status(500).json({ error: "Serverfout" });
   }
 });
 
 router.get("/:id", (req, res) => {
   const game = getGame(req.params.id);
-  if (!game) return res.status(404).json({ error: "Spel niet gevonden" });
-  return res.json(game);
+  if (!game) return void res.status(404).json({ error: "Spel niet gevonden" });
+  return void res.json(game);
 });
 
 export default router;

@@ -25,10 +25,10 @@ router.get("/users", async (_req, res) => {
       },
       orderBy: { createdAt: "asc" },
     });
-    return res.json(users);
+    return void res.json(users);
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "Serverfout" });
+    return void res.status(500).json({ error: "Serverfout" });
   }
 });
 
@@ -37,24 +37,24 @@ router.patch("/users/:id/role", async (req, res) => {
   const schema = z.object({ role: z.enum(["player", "admin"]) });
   const result = schema.safeParse(req.body);
   if (!result.success) {
-    return res.status(400).json({ error: "Ongeldig rol-veld (player of admin)" });
+    return void res.status(400).json({ error: "Ongeldig rol-veld (player of admin)" });
   }
 
   const { id } = req.params;
 
   try {
     const target = await prisma.user.findUnique({ where: { id } });
-    if (!target) return res.status(404).json({ error: "Gebruiker niet gevonden" });
+    if (!target) return void res.status(404).json({ error: "Gebruiker niet gevonden" });
 
     const updated = await prisma.user.update({
       where: { id },
       data: { role: result.data.role },
       select: { id: true, username: true, role: true },
     });
-    return res.json({ message: "Rol bijgewerkt", user: updated });
+    return void res.json({ message: "Rol bijgewerkt", user: updated });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "Serverfout" });
+    return void res.status(500).json({ error: "Serverfout" });
   }
 });
 
@@ -64,13 +64,13 @@ router.delete("/users/:id", async (req, res) => {
 
   try {
     const target = await prisma.user.findUnique({ where: { id } });
-    if (!target) return res.status(404).json({ error: "Gebruiker niet gevonden" });
+    if (!target) return void res.status(404).json({ error: "Gebruiker niet gevonden" });
 
     await prisma.user.delete({ where: { id } });
-    return res.json({ message: "Gebruiker verwijderd" });
+    return void res.json({ message: "Gebruiker verwijderd" });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "Serverfout" });
+    return void res.status(500).json({ error: "Serverfout" });
   }
 });
 
@@ -93,10 +93,10 @@ router.get("/games", async (_req, res) => {
       orderBy: { createdAt: "desc" },
       take: 100,
     });
-    return res.json(games);
+    return void res.json(games);
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "Serverfout" });
+    return void res.status(500).json({ error: "Serverfout" });
   }
 });
 

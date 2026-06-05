@@ -30,19 +30,19 @@ router.post("/setup", requireAuth, async (req: AuthRequest, res) => {
 
   const qrCodeDataUrl = await qrcode.toDataURL(secret.otpauth_url!);
 
-  return res.json({ secret: secret.base32, qrCode: qrCodeDataUrl });
+  return void res.json({ secret: secret.base32, qrCode: qrCodeDataUrl });
 });
 
 // Bevestig en schakel 2FA in na scannen QR-code
 router.post("/enable", requireAuth, async (req: AuthRequest, res) => {
   const result = codeSchema.safeParse(req.body);
   if (!result.success) {
-    return res.status(400).json({ error: "Voer een geldige 6-cijferige code in" });
+    return void res.status(400).json({ error: "Voer een geldige 6-cijferige code in" });
   }
 
   const user = await prisma.user.findUnique({ where: { id: req.user!.userId } });
   if (!user?.tfaSecret) {
-    return res.status(400).json({ error: "Voer eerst /setup uit" });
+    return void res.status(400).json({ error: "Voer eerst /setup uit" });
   }
 
   const valid = speakeasy.totp.verify({
@@ -53,7 +53,7 @@ router.post("/enable", requireAuth, async (req: AuthRequest, res) => {
   });
 
   if (!valid) {
-    return res.status(401).json({ error: "Ongeldige verificatiecode" });
+    return void res.status(401).json({ error: "Ongeldige verificatiecode" });
   }
 
   await prisma.user.update({
@@ -61,19 +61,19 @@ router.post("/enable", requireAuth, async (req: AuthRequest, res) => {
     data: { isTwoFactorEnabled: true },
   });
 
-  return res.json({ message: "2FA succesvol ingeschakeld" });
+  return void res.json({ message: "2FA succesvol ingeschakeld" });
 });
 
 // Schakel 2FA uit (vereist geldige TOTP-code)
 router.post("/disable", requireAuth, async (req: AuthRequest, res) => {
   const result = codeSchema.safeParse(req.body);
   if (!result.success) {
-    return res.status(400).json({ error: "Voer een geldige 6-cijferige code in" });
+    return void res.status(400).json({ error: "Voer een geldige 6-cijferige code in" });
   }
 
   const user = await prisma.user.findUnique({ where: { id: req.user!.userId } });
   if (!user?.isTwoFactorEnabled || !user.tfaSecret) {
-    return res.status(400).json({ error: "2FA is niet ingeschakeld" });
+    return void res.status(400).json({ error: "2FA is niet ingeschakeld" });
   }
 
   const valid = speakeasy.totp.verify({
@@ -84,7 +84,7 @@ router.post("/disable", requireAuth, async (req: AuthRequest, res) => {
   });
 
   if (!valid) {
-    return res.status(401).json({ error: "Ongeldige verificatiecode" });
+    return void res.status(401).json({ error: "Ongeldige verificatiecode" });
   }
 
   await prisma.user.update({
@@ -92,7 +92,7 @@ router.post("/disable", requireAuth, async (req: AuthRequest, res) => {
     data: { isTwoFactorEnabled: false, tfaSecret: null },
   });
 
-  return res.json({ message: "2FA uitgeschakeld" });
+  return void res.json({ message: "2FA uitgeschakeld" });
 });
 
 // Verifieer TOTP-code tijdens inloggen (gebruikt temp-token)
@@ -104,7 +104,7 @@ router.post("/verify", async (req, res) => {
 
   const result = schema.safeParse(req.body);
   if (!result.success) {
-    return res.status(400).json({ error: result.error.issues[0].message });
+    return void res.status(400).json({ error: result.error.issues[0].message });
   }
 
   const { tempToken, code } = result.data;
@@ -116,16 +116,16 @@ router.post("/verify", async (req, res) => {
       requiresTwoFactor?: boolean;
     };
   } catch {
-    return res.status(401).json({ error: "Ongeldige of verlopen token" });
+    return void res.status(401).json({ error: "Ongeldige of verlopen token" });
   }
 
   if (!payload.requiresTwoFactor) {
-    return res.status(401).json({ error: "Ongeldig tokentype" });
+    return void res.status(401).json({ error: "Ongeldig tokentype" });
   }
 
   const user = await prisma.user.findUnique({ where: { id: payload.userId } });
   if (!user?.tfaSecret) {
-    return res.status(401).json({ error: "2FA niet ingesteld voor dit account" });
+    return void res.status(401).json({ error: "2FA niet ingesteld voor dit account" });
   }
 
   const valid = speakeasy.totp.verify({
@@ -136,7 +136,7 @@ router.post("/verify", async (req, res) => {
   });
 
   if (!valid) {
-    return res.status(401).json({ error: "Ongeldige verificatiecode" });
+    return void res.status(401).json({ error: "Ongeldige verificatiecode" });
   }
 
   const token = jwt.sign(
@@ -145,7 +145,7 @@ router.post("/verify", async (req, res) => {
     { expiresIn: "1h" }
   );
 
-  return res.json({
+  return void res.json({
     message: "2FA verificatie geslaagd",
     token,
     user: { id: user.id, username: user.username, role: user.role },
