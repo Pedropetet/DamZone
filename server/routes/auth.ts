@@ -9,7 +9,7 @@ import { requireAuth, type AuthRequest } from "../middleware/authMiddleware.js";
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: parseInt(process.env.LOGIN_RATE_LIMIT_MAX ?? "10"),
   message: { error: "Te veel inlogpogingen. Probeer het over 15 minuten opnieuw." },
   standardHeaders: true,
   legacyHeaders: false,
@@ -17,7 +17,7 @@ const loginLimiter = rateLimit({
 
 const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
-  max: 5,
+  max: parseInt(process.env.REGISTER_RATE_LIMIT_MAX ?? "5"),
   message: { error: "Te veel registratiepogingen. Probeer het over een uur opnieuw." },
   standardHeaders: true,
   legacyHeaders: false,
