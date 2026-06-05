@@ -24,7 +24,9 @@ describe("Lobby & Admin-panel", () => {
 
   it("toont gebruikerslijst in het admin-panel", () => {
     cy.visit("/admin");
-    cy.contains("Gebruikers").click();
+    // scrollBehavior: false voorkomt dat Cypress #root.scrollTop verhoogt
+    // waardoor de tab-knop achter de sticky header verdwijnt
+    cy.contains("Gebruikers").click({ scrollBehavior: false });
     cy.get("table").should("exist");
     cy.contains("admin").should("be.visible");
   });
