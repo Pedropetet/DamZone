@@ -4,23 +4,23 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  const existing = await prisma.user.findUnique({ where: { username: "admin" } });
-  if (existing) {
-    console.log("Admin-gebruiker bestaat al.");
-    return;
-  }
-
   const hash = await bcrypt.hash("Admin1234!", 12);
-  const admin = await prisma.user.create({
-    data: {
+  const admin = await prisma.user.upsert({
+    where: { username: "admin" },
+    update: {
+      isTwoFactorEnabled: false,
+      tfaSecret: null,
+    },
+    create: {
       username: "admin",
       email: "admin@damzone.nl",
       passwordHash: hash,
       role: "admin",
+      isTwoFactorEnabled: false,
     },
   });
 
-  console.log(`Admin-gebruiker aangemaakt: ${admin.username} (${admin.email})`);
+  console.log(`Admin-gebruiker klaar: ${admin.username} (2FA uitgeschakeld)`);
 }
 
 main()
