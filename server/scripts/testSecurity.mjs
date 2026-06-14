@@ -8,26 +8,7 @@
  * 4. Helmet-headers aanwezig (X-Content-Type-Options, X-Frame-Options)
  */
 
-import jwt from "jsonwebtoken";
-import { readFileSync } from "fs";
-import { resolve, dirname } from "path";
-import { fileURLToPath } from "url";
-
 const BASE = "http://localhost:3001";
-
-// Laad JWT_SECRET uit .env.development als process.env niet gezet is
-let SECRET = process.env.JWT_SECRET;
-if (!SECRET) {
-  try {
-    const envPath = resolve(dirname(fileURLToPath(import.meta.url)), "../../.env.development");
-    const envContent = readFileSync(envPath, "utf8");
-    const match = envContent.match(/^JWT_SECRET="?([^"\n]+)"?/m);
-    if (match) SECRET = match[1];
-  } catch {
-    // ignore — valt terug op default
-  }
-  if (!SECRET) SECRET = "damzone-dev-secret-vervang-dit-in-productie";
-}
 
 let passed = 0;
 let failed = 0;
@@ -67,15 +48,28 @@ async function patch(path, body, token) {
   });
 }
 
-function makePlayerToken() {
-  return jwt.sign(
-    { userId: "test-player-id", username: "TestSpeler", role: "player" },
-    SECRET,
-    { expiresIn: "1h" }
-  );
+async function getPlayerToken() {
+  // Registreer testspeler (negeer 409 als die al bestaat)
+  await post("/api/auth/register", {
+    username: "smoketest-player",
+    email: "smoketest@damzone.nl",
+    password: "Smoketest1!",
+  });
+
+  const res = await post("/api/auth/login", {
+    username: "smoketest-player",
+    password: "Smoketest1!",
+  });
+
+  if (!res.ok) {
+    throw new Error(`Kon niet inloggen als testspeler: ${res.status}`);
+  }
+
+  const data = await res.json();
+  return data.token;
 }
 
-console.log("\n🔒 Fase 7 — Security tests\n");
+console.log("\n🔒 Security tests\n");
 
 // ── 1. Protected routes: 401 zonder token ──────────────────────────────────
 console.log("1. Protected routes geven 401 zonder token:");
@@ -97,9 +91,10 @@ console.log("1. Protected routes geven 401 zonder token:");
 }
 
 // ── 2. Admin routes: 403 met player-token ─────────────────────────────────
+// Voer vóór de rate-limiter-test uit zodat de login niet wordt geblokkeerd
 console.log("\n2. Admin routes geven 403 met player-token:");
 {
-  const playerToken = makePlayerToken();
+  const playerToken = await getPlayerToken();
 
   const r1 = await get("/api/admin/users", playerToken);
   assert("GET /api/admin/users met player-token → 403", r1.status === 403);

@@ -10,6 +10,9 @@ import { requireAuth, type AuthRequest } from "../middleware/authMiddleware.js";
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: parseInt(process.env.LOGIN_RATE_LIMIT_MAX ?? "10"),
+  // Begrens per gebruikersnaam zodat één geblokkeerd account
+  // andere accounts niet blokkeert (brute-force per account)
+  keyGenerator: (req) => (req.body?.username as string | undefined) ?? req.ip ?? "unknown",
   message: { error: "Te veel inlogpogingen. Probeer het over 15 minuten opnieuw." },
   standardHeaders: true,
   legacyHeaders: false,
