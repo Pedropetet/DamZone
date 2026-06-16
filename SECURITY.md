@@ -30,7 +30,7 @@ Overzicht van de beveiligingsmaatregelen die zijn geïmplementeerd.
 - Twee rollen: `player` (standaard) en `admin`
 - `requireRole(...roles)` middleware keurt 403 terug bij onvoldoende rechten
 - Alle `/api/admin/*` routes vereisen `admin`-rol + geldig JWT
-- Rol zit in het JWT-payload; wijziging vereist opnieuw inloggen
+- `requireRole` doet altijd een live DB-opzoeking — rolwijzigingen zijn direct actief zonder opnieuw inloggen
 
 ---
 
@@ -46,11 +46,12 @@ Overzicht van de beveiligingsmaatregelen die zijn geïmplementeerd.
 
 Via `express-rate-limit`:
 
-| Route | Max pogingen | Venster |
-|---|---|---|
-| `POST /api/auth/login` | 10 | 15 minuten |
-| `POST /api/auth/register` | 5 | 60 minuten |
+| Route | Max pogingen | Venster | Sleutel |
+|---|---|---|---|
+| `POST /api/auth/login` | 10 | 15 minuten | `username` (uit request body) |
+| `POST /api/auth/register` | 5 | 60 minuten | IP-adres |
 
+De loginlimiter keyt op `username` zodat een geblokkeerd account andere accounts op hetzelfde IP niet raakt.  
 Bij overschrijding: HTTP 429 met foutmelding. Headers `RateLimit-*` worden meegestuurd (RFC 6585).
 
 ---
