@@ -57,7 +57,7 @@ cp .env.example .env
 ### Database klaarzetten
 ```bash
 npx prisma migrate dev        # Migraties draaien
-npm run seed                  # Admin-gebruiker aanmaken (admin / Admin1234!)
+npm run seed                  # Admin-gebruiker aanmaken (admin / Admin1234!) — reset ook 2FA
 ```
 
 ### Starten
@@ -199,7 +199,7 @@ Gewone spelers kunnen zichzelf registreren via `/register`.
 | `npm run dev` | Frontend (Vite, poort 5173) |
 | `npm run dev:server` | Backend (tsx, poort 3001) |
 | `npm run build` | Productie-build frontend |
-| `npm run seed` | Admin-gebruiker aanmaken |
+| `npm run seed` | Admin-gebruiker aanmaken / 2FA resetten |
 | `npm run test` | Vitest (watch) |
 | `npm run test:run` | Vitest (eenmalig) |
 | `npm run test:coverage` | Vitest + coverage |
@@ -215,7 +215,7 @@ Gewone spelers kunnen zichzelf registreren via `/register`.
 |---|---|
 | Pagina verversen tijdens spel | Bij F5 probeert de client opnieuw verbinding te maken via `sessionStorage`. Als de server de sessie niet meer kent (server herstart, spel beëindigd), verschijnt een foutmelding. Navigeer dan handmatig naar de lobby. |
 | JWT-sessie na profielwijziging | Na het wijzigen van gebruikersnaam blijft het token geldig met de oude naam tot vervaldatum (1 uur). De weergave in de UI wordt wel direct bijgewerkt via `updateUser`. |
-| Rate limiting in productie | De rate-limiter gebruikt in-memory opslag. Bij meerdere server-instanties is een gedeelde Redis-store nodig. |
+| Rate limiting in productie | De rate-limiter gebruikt in-memory opslag en keyt op gebruikersnaam (login) of IP (registratie). Bij meerdere server-instanties is een gedeelde Redis-store nodig. |
 
 ---
 
